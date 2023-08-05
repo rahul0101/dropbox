@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload and List</title>
+</head>
+<body>
+<h1>File Upload</h1>
+<input type="file" id="fileInput">
+<label for="uploadUserId">Upload User ID:</label>
+<input type="text" id="uploadUserId">
+<button onclick="uploadFile()">Upload</button>
+<p id="uploadResult"></p>
+
+<h1>File List</h1>
+<label for="fetchUserId">User ID:</label>
+<input type="text" id="fetchUserId">
+<button onclick="fetchFileList()">Fetch File List</button>
+<ul id="fileList"></ul>
+
+<script>
+    function uploadFile() {
+        const fileInput = document.getElementById("fileInput");
+        const fileList = fileInput.files;
+
+        if (fileList.length === 0) {
+            alert("Please select a file to upload.");
+            return;
+        }
+
+        const uploadUserIdInput = document.getElementById("uploadUserId");
+        const userId = uploadUserIdInput.value;
+
+        if (!userId) {
+            alert("Please enter a valid user ID.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileList[0]);
+
+        fetch("http://localhost:8000/file/upload", {
+            method: "POST",
+            headers: {
+                "userId": userId
+            },
+            body: formData
+        })
+            .then(response => {
+                if (response.status === 204) {
+                    document.getElementById("uploadResult").textContent = "File uploaded successfully!";
+                } else {
+                    document.getElementById("uploadResult").textContent = "File upload failed!";
+                }
+            })
+            .catch(error => {
+                console.error("Error uploading file:", error);
+                document.getElementById("uploadResult").textContent = "File upload failed!";
+            });
+    }
+
+    function fetchFileList() {
+        const fetchUserIdInput = document.getElementById("fetchUserId");
+        const userId = fetchUserIdInput.value;
+
+        if (!userId) {
+            alert("Please enter a valid user ID.");
+            return;
+        }
+
+        fetch(`http://localhost:8000/file/list/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Request failed.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const fileList = document.getElementById("fileList");
+                fileList.innerHTML = "";
+
+                data.forEach(file => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = `File Name: ${file.name}, Created At: ${file.createdAtEpoch}`;
+
+                    fileList.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching file list:", error);
+                alert("Failed to fetch file list.");
+            });
+    }
+</script>
+</body>
+</html>
